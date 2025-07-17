@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  password     String
+  firstName    String
+  lastName     String
+  referralCode String?  @unique
+  redeemedCode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Users who used this user's referral code
+  referrals    ReferralClaim[] @relation("Referrer")
+  // The referral this user claimed
+  claimedFrom  ReferralClaim[] @relation("Claimer")
+
+  @@map("users")
+}
+
+model ReferralClaim {
+  id         String   @id @default(cuid())
+  referrerId String
+  claimerId  String
+  createdAt  DateTime @default(now())
+
+  referrer User @relation("Referrer", fields: [referrerId], references: [id])
+  claimer  User @relation("Claimer", fields: [claimerId], references: [id])
+
+  @@unique([referrerId, claimerId])
+  @@map("referral_claims")
+}
